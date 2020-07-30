@@ -360,6 +360,7 @@ VPC
     tencentcloud_eni
     tencentcloud_eni_attachment
     tencentcloud_vpc
+	tencentcloud_vpc_acl
     tencentcloud_subnet
     tencentcloud_security_group
     tencentcloud_security_group_rule
@@ -615,6 +616,7 @@ func Provider() terraform.ResourceProvider {
 			"tencentcloud_cbs_storage_attachment":         resourceTencentCloudCbsStorageAttachment(),
 			"tencentcloud_cbs_snapshot_policy_attachment": resourceTencentCloudCbsSnapshotPolicyAttachment(),
 			"tencentcloud_vpc":                            resourceTencentCloudVpcInstance(),
+			"tencentcloud_vpc_acl":                        resourceTencentCloudVpcACL(),
 			"tencentcloud_subnet":                         resourceTencentCloudVpcSubnet(),
 			"tencentcloud_route_entry":                    resourceTencentCloudRouteEntry(),
 			"tencentcloud_route_table_entry":              resourceTencentCloudVpcRouteEntry(),
