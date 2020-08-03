@@ -8,35 +8,18 @@ data "tencentcloud_vpc_instances" "foo" {
 }
 
 resource "resource_vpc_acl" "default" {
-    vpc_id            	= data.tencentcloud_vpc_instances.foo.0.vpc_id
+    vpc_id            	= data.tencentcloud_vpc_instances.foo.instance_list.0.vpc_id
     network_acl_name  	= "test_acl"
+	ingress [
+		"ACCEPT#192.168.1.0/24#80#TCP",
+		"ACCEPT#192.168.1.0/24#80-90#TCP",
+	]
+	egress [
+		"ACCEPT#192.168.1.0/24#80#TCP",
+		"ACCEPT#192.168.1.0/24#80-90#TCP",
+	]
 }
 
-data "tencentcloud_vpc_subnets" "instances" {
-	name 	 = "subnet_test"
-	vpc_id 	 = data.tencentcloud_vpc_instances.foo.0.vpc_id
-}
-
-resource "resource_vpc_acl_attachment" "attachment"{
-	id			=	resource_vpc_acl.default.id
-	subnet_ids	= data.tencentcloud_vpc_subnets.instances[*].subnet_id
-}
-
-resource "resource_vpc_acl_rule" "rule"{
-	id		=	resource_vpc_acl.default.id
-	rule_list  {
-		ingress [
-				"ACCEPT#192.168.1.0/24#80#TCP",
-				"ACCEPT#192.168.1.0/24#80-90#TCP",
-				"ACCEPT#192.168.1.0/24#80,90#TCP",
-		]
-		egress [
-				"ACCEPT#192.168.1.0/24#80#TCP",
-				"ACCEPT#192.168.1.0/24#80-90#TCP",
-				"ACCEPT#192.168.1.0/24#80,90#TCP",
-		]
-    }
-}
 ```
 
 Import
@@ -44,7 +27,7 @@ Import
 Vpc ACL can be imported, e.g.
 
 ```
-$ terraform import tencentcloud_vpc_acl.test vpc-id
+$ terraform import tencentcloud_vpc_acl.default acl-id
 ```
 */
 package tencentcloud
@@ -211,12 +194,20 @@ func resourceTencentCloudVpcACLUpdate(d *schema.ResourceData, meta interface{}) 
 		service = VpcService{client: meta.(*TencentCloudClient).apiV3Conn}
 		id      = d.Id()
 
+		name          *string
 		ingress       []VpcACLRule
 		egress        []VpcACLRule
 		deleteIngress bool
 		deleteEgress  bool
 	)
 
+	if d.HasChange("name") {
+		name = helper.String(d.Get("name").(string))
+		err := service.ModifyVpcNetworkAcl(ctx, &id, name)
+		if err != nil {
+			return nil
+		}
+	}
 	if d.HasChange("ingress") {
 		if raw, ok := d.GetOk("ingress"); ok {
 			oldIngress := helper.InterfacesStrings(raw.([]interface{}))

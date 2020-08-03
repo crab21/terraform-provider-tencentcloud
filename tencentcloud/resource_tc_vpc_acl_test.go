@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccTencentCloudVpcAclBasic(t *testing.T) {
+func TestAccTencentCloudVpcAcl_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -20,7 +20,7 @@ func TestAccTencentCloudVpcAclBasic(t *testing.T) {
 				Config: testAccVpcACLConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVpcACLExists("tencentcloud_vpc_acl.foo"),
-					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "name", "test_acl_gogoowang"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "name", "test_acl"),
 
 					resource.TestCheckResourceAttrSet("tencentcloud_vpc_acl.foo", "ingress"),
 					resource.TestCheckResourceAttrSet("tencentcloud_vpc_acl.foo", "egress"),
@@ -29,9 +29,7 @@ func TestAccTencentCloudVpcAclBasic(t *testing.T) {
 		},
 	})
 }
-
-/*
-func TestAccTencentCloudVpcACLUpdate(t *testing.T) {
+func TestAccTencentCloudVpcAclRulesUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -40,33 +38,29 @@ func TestAccTencentCloudVpcACLUpdate(t *testing.T) {
 			{
 				Config: testAccVpcACLConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVpcACLExists("tencentcloud_vpc.foo"),
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", "name", "test_acl_gogoowang"),
-
-					resource.TestCheckResourceAttrSet("tencentcloud_vpc.foo", "ingress.#"),
-					resource.TestCheckResourceAttrSet("tencentcloud_vpc.foo", "egress.#"),
+					testAccCheckVpcACLExists("tencentcloud_vpc_acl.foo"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "name", "test_acl"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "ingress.0", "ACCEPT#192.168.1.0/24#80#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "ingress.1", "ACCEPT#192.168.1.0/24#80-90#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "egress.0", "ACCEPT#192.168.1.0/24#80#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "egress.1", "ACCEPT#192.168.1.0/24#80-90#TCP"),
 				),
 			},
 			{
-				Config: testAccVpcConfigUpdate,
+				Config: testAccVpcACLConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVpcACLExists("tencentcloud_vpc.foo"),
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", "cidr_block", defaultVpcCidrLess),
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", "name", defaultInsNameUpdate),
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", "is_multicast", "false"),
-
-					resource.TestCheckResourceAttrSet("tencentcloud_vpc.foo", "is_default"),
-					resource.TestCheckResourceAttrSet("tencentcloud_vpc.foo", "create_time"),
-					resource.TestCheckResourceAttrSet("tencentcloud_vpc.foo", "dns_servers.#"),
-
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", fmt.Sprintf("%s.%d", "dns_servers", hashcode.String("119.29.29.29")), "119.29.29.29"),
-					resource.TestCheckResourceAttr("tencentcloud_vpc.foo", fmt.Sprintf("%s.%d", "dns_servers", hashcode.String("182.254.116.116")), "182.254.116.116"),
+					testAccCheckVpcACLExists("tencentcloud_vpc_acl.foo"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "name", "test_acl"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "ingress.0", "ACCEPT#192.168.1.0/24#800#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "ingress.1", "ACCEPT#192.168.1.0/24#800-900#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "egress.0", "ACCEPT#192.168.1.0/24#800#TCP"),
+					resource.TestCheckResourceAttr("tencentcloud_vpc_acl.foo", "egress.1", "ACCEPT#192.168.1.0/24#800-900#TCP"),
 				),
 			},
 		},
 	})
 }
-*/
+
 func testAccCheckVpcACLExists(r string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		logId := getLogId(contextNil)
@@ -119,37 +113,33 @@ data "tencentcloud_vpc_instances" "default" {
 }
 
 resource "tencentcloud_vpc_acl" "foo" {  
-    vpc_id            	= data.tencentcloud_vpc_instances.foo.0.vpc_id
-    network_acl_name  	= "test_acl_gogoowang"
+    vpc_id            	= data.tencentcloud_vpc_instances.default.instance_list.0.vpc_id
+    name  	= "test_acl"
 	ingress = [
 		"ACCEPT#192.168.1.0/24#80#TCP",
 		"ACCEPT#192.168.1.0/24#80-90#TCP",
-		"ACCEPT#192.168.1.0/24#440,900#TCP",
 	]
 	egress = [
     	"ACCEPT#192.168.1.0/24#80#TCP",
     	"ACCEPT#192.168.1.0/24#80-90#TCP",
-    	"ACCEPT#192.168.1.0/24#80,90#TCP",
 	]
 }  
 `
 
-const testAccVpcACLConfigUpdate = testAccVpcACLConfig + `
+const testAccVpcACLConfigUpdate = `
 data "tencentcloud_vpc_instances" "default" {
 }
 
 resource "tencentcloud_vpc_acl" "foo" {  
-    vpc_id            	= data.tencentcloud_vpc_instances.foo.0.vpc_id
-    network_acl_name  	= "test_acl_gogoowang"
+    vpc_id            	= data.tencentcloud_vpc_instances.default.instance_list.0.vpc_id
+    name  	= "test_acl_gogoowang"
 	ingress = [
-		"ACCEPT#192.168.1.0/24#80#TCP",
-		"ACCEPT#192.168.1.0/24#80-90#TCP",
-		"ACCEPT#192.168.1.0/24#440,900#TCP",
+		"ACCEPT#192.168.1.0/24#800#TCP",
+		"ACCEPT#192.168.1.0/24#800-900#TCP",
 	]
 	egress = [
-    	"ACCEPT#192.168.1.0/24#80#TCP",
-    	"ACCEPT#192.168.1.0/24#80-90#TCP",
-    	"ACCEPT#192.168.1.0/24#80,90#TCP",
+    	"ACCEPT#192.168.1.0/24#800#TCP",
+    	"ACCEPT#192.168.1.0/24#800-900#TCP",
 	]
 } 
 `

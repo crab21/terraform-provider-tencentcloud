@@ -346,6 +346,7 @@ VPC
     tencentcloud_security_groups
     tencentcloud_subnet
     tencentcloud_vpc
+    tencentcloud_vpc_acls
     tencentcloud_vpc_instances
     tencentcloud_vpc_route_tables
     tencentcloud_vpc_subnets
@@ -510,6 +511,7 @@ func Provider() terraform.ResourceProvider {
 			"tencentcloud_vpc_subnets":                  dataSourceTencentCloudVpcSubnets(),
 			"tencentcloud_vpc_route_tables":             dataSourceTencentCloudVpcRouteTables(),
 			"tencentcloud_vpc":                          dataSourceTencentCloudVpc(),
+			"tencentcloud_vpc_acls":                     dataSourceTencentCloudVpcAcls(),
 			"tencentcloud_subnet":                       dataSourceTencentCloudSubnet(),
 			"tencentcloud_route_table":                  dataSourceTencentCloudRouteTable(),
 			"tencentcloud_eip":                          dataSourceTencentCloudEip(),
